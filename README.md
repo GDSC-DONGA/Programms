@@ -29,13 +29,11 @@ admin
 - 평균
 
 ## Pre SetUp
-----
 1. PyCharm-Virtual Environments 생성
 2. 프로젝트 터미널에서 `pip install -r requirements.txt`
 3. FireBase RealTimeDataBase <key>.json 파일 다운로드 후 코드 적용
 
 ## contributor
----
 GDSC DAU 1st Core Members
 - 이승민(Lead)
 - 박정현
@@ -46,7 +44,6 @@ GDSC DAU 1st Core Members
 
 
 ## LICENSE
-----
 MIT License
 
 Copyright (c) 2023 GDSC DAU
@@ -71,5 +68,4 @@ SOFTWARE.
 
 
 ## concat 
----
 email. jhparkinglot@gmail.com
