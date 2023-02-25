@@ -68,5 +68,5 @@ SOFTWARE.
 
 
 ## concat 
-email. jhparkinglot@gmail.com
-github. jhparkland
+email. jhparkinglot@gmail.com  
+github. [jhparkland](github.com/jhparkland)
