@@ -34,6 +34,17 @@ admin
 2. 프로젝트 터미널에서 `pip install -r requirements.txt`
 3. FireBase RealTimeDataBase <key>.json 파일 다운로드 후 코드 적용
 
+## Build
+
+1. 프로젝트 폴더에서 아래 명령어 실행
+~~~bash
+C:\Users\<user_name>\PycharmProjects\<Project_name>\venv\Scripts\activate.bat 
+~~~
+
+2. pyinstaller 실행
+~~~bash
+pyinstaller --noconfirm --onefile --noconsole --icon "C:\Users\<user_name>\PycharmProjects\<Project_name>\<icon_file_name>.ico" --hidden-import "_ssl"  --name "GDSC DAU 포인트 조회 시스템"  "C:\Users\<user_name>\PycharmProjects\<Project_name>/<file_name>.py" 
+~~~
 ## contributor
 ---
 GDSC DAU 1st Core Members
