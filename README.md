@@ -69,4 +69,4 @@ SOFTWARE.
 
 ## concat 
 email. jhparkinglot@gmail.com  
-github. [jhparkland](github.com/jhparkland)
+github. [jhparkland](https://github.com/jhparkland)
