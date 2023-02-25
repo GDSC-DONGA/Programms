@@ -7,11 +7,12 @@
   - save시 자동으로 DB에 Write
 
 
-관련 패키지는 `**env**` 폴더 참고바람.
+관련 패키지는 `env` 폴더 참고바람.
 
 사용하기 앞서 `firebase RealTimeDataBase`를 이용하는 프로그램인 점 유의.
-빌드 담당자는 key파일이 존재해야함. (업로드 된 code파일은 key 파일 제외 후 업로드 됨)
+빌드 담당자는 key파일이 존재해야함. (업로드 된 code파일은 key 파일 제외 후 업로드 됨)  
 
+**모든 코드 파일은 pyinstaller를 통해 빌드하여 배포합니다.**
 
 # DB Tree structure
 
@@ -29,7 +30,6 @@ admin
 - 평균
 
 ## Pre SetUp
-----
 1. PyCharm-Virtual Environments 생성
 2. 프로젝트 터미널에서 `pip install -r requirements.txt`
 3. FireBase RealTimeDataBase <key>.json 파일 다운로드 후 코드 적용
@@ -46,7 +46,6 @@ C:\Users\<user_name>\PycharmProjects\<Project_name>\venv\Scripts\activate.bat
 pyinstaller --noconfirm --onefile --noconsole --icon "C:\Users\<user_name>\PycharmProjects\<Project_name>\<icon_file_name>.ico" --hidden-import "_ssl"  --name "GDSC DAU 포인트 조회 시스템"  "C:\Users\<user_name>\PycharmProjects\<Project_name>/<file_name>.py" 
 ~~~
 ## contributor
----
 GDSC DAU 1st Core Members
 - 이승민(Lead)
 - 박정현
@@ -57,7 +56,6 @@ GDSC DAU 1st Core Members
 
 
 ## LICENSE
-----
 MIT License
 
 Copyright (c) 2023 GDSC DAU
@@ -82,5 +80,5 @@ SOFTWARE.
 
 
 ## concat 
----
-email. jhparkinglot@gmail.com
+email. jhparkinglot@gmail.com  
+github. [jhparkland](https://github.com/jhparkland)
