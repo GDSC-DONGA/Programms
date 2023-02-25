@@ -7,7 +7,7 @@
   - save시 자동으로 DB에 Write
 
 
-관련 패키지는 `**env**` 폴더 참고바람.
+관련 패키지는 `env` 폴더 참고바람.
 
 사용하기 앞서 `firebase RealTimeDataBase`를 이용하는 프로그램인 점 유의.
 빌드 담당자는 key파일이 존재해야함. (업로드 된 code파일은 key 파일 제외 후 업로드 됨)
