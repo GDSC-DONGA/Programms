@@ -1,8 +1,7 @@
 import sys
 import time
-
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QFileDialog, QTableWidget, QTableWidgetItem, \
-    QMessageBox
+    QMessageBox, QInputDialog
 from PyQt5.QtCore import QThread, pyqtSignal, QMutexLocker, QReadWriteLock, QReadLocker, QMutex
 from openpyxl import load_workbook, Workbook
 import firebase_admin
@@ -67,19 +66,14 @@ class SaveFileThread(QThread):
             for row in range(self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
                 print(student_number, end=' ')
-                second_param = {
+                for idx, column_name in enumerate(self.parent.column_names[2:-2], 2): # 새로 추가된 열까지 적용 받음
+                    second_param[column_name] = self.parent.table_widget.item(row, idx).text()
+
+                second_param.update({
                     "이름": self.parent.table_widget.item(row, 1).text(),
-                    "공부인증챌린지": self.parent.table_widget.item(row, 2).text(),
-                    'ZEP DAILY 모각공': self.parent.table_widget.item(row, 3).text(),
-                    '설문조사참여': self.parent.table_widget.item(row, 4).text(),
-                    '열품타': self.parent.table_widget.item(row, 5).text(),
-                    'DAU 아이디어 톤': self.parent.table_widget.item(row, 6).text(),
-                    '조력자설문(이월)': self.parent.table_widget.item(row, 7).text(),
-                    'ZEP제작': self.parent.table_widget.item(row, 8).text(),
-                    '게임기획': self.parent.table_widget.item(row, 9).text(),
-                    "합계": self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 2).text(), # 포인트 항목 추가를 고려해 인덱스 설정함.
+                    "합계": self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 2).text(),
                     "평균": self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 1).text(),
-                }
+                })
                 self.parent.second_ref.child(student_number).set(second_param)
                 print(second_param["이름"])
 
@@ -112,9 +106,13 @@ class MainWindow(QMainWindow):
         self.save_file_action.triggered.connect(self.save_file_dialog)
         self.file_menu.addAction(self.save_file_action)
 
+        self.add_column_action = QAction("Add Column", self)  # new
+        self.add_column_action.triggered.connect(self.add_column)
+        self.file_menu.addAction(self.add_column_action)
+
         self.filename = "멤버 포인트 보드"
         self.data = []
-
+        self.column_names = []  # 기본 열 이름 설정
         # Firebase 프로젝트에 액세스하는 코드
         first_path = <your key.json path>
         first_cred = credentials.Certificate(first_path)
@@ -143,18 +141,56 @@ class MainWindow(QMainWindow):
             average_item = QTableWidgetItem(str(total / count))
             self.table_widget.setItem(item.row(), self.table_widget.columnCount() - 1, average_item)
 
+    def add_column(self):
+        # get the current number of columns
+        current_column_count = self.table_widget.columnCount()
+
+        # get the name of the new column from the user
+        column_name, ok = QInputDialog.getText(self, 'Add Column', '새로운 항목 이름을 입력하세요:')
+
+        if ok and column_name.strip() != "":
+            self.column_names.insert(-2, column_name)  # 열 이름 리스트 업데이트
+            header_item = QTableWidgetItem(column_name)
+            index = current_column_count - 2
+            self.table_widget.insertColumn(index)
+            self.table_widget.setHorizontalHeaderItem(index, header_item)
+            print(self.column_names)
+
+            # add empty cells to the new column for each row
+            for row in range(self.table_widget.rowCount()): # 0으로 초기화
+                item = QTableWidgetItem("0")
+                self.table_widget.setItem(row, index, item)
+
     def open_file_dialog(self):
         self.table_widget.clear()
         ref = db.reference('/admin')
         students = ref.order_by_child('이름').get()
         students_number = list(students.keys())
+        print(students_number[0])
+        left_header = ['학번', '이름']
+        right_header = ['합계', '평균']
+        headers = []
+        for student_number in students_number:
+            student = students[student_number]
 
+        headers = list(student.keys())
+
+        to_remove = ["합계", "평균", "이름"]
+
+        # 리스트에서 해당 열 이름을 가진 원소를 삭제
+        for col_name in to_remove:
+            headers.remove(col_name)
+
+        # sum
+        headers = left_header + headers + right_header
+        print(headers)
+
+        # key value 확인
         for key, value in students.items():
             print(key, value)
 
         if students is not None:
-            headers = ['학번', '이름', '공부인증챌린지', 'ZEP DAILY 모각공', '설문조사참여', '열품타', 'DAU 아이디어 톤', '조력자설문(이월)', 'ZEP제작',
-                       '게임기획', '합계', '평균']
+
             self.table_widget.setColumnCount(len(headers))
             self.table_widget.setRowCount(len(students))
 
@@ -174,13 +210,11 @@ class MainWindow(QMainWindow):
                     data_row.append(cell_value)
                 self.data.append(data_row)
 
-
         # 합계와 평균을 업데이트
         self.update_total_and_average(None)
 
         del headers
         del data_row
-        del item
 
     def save_file_dialog(self):
         # Check if there is any data to save
@@ -217,8 +251,3 @@ if __name__ == "__main__":
     main_window = MainWindow()
     app.exec_()
 
-
-'''
-pyinstaller --noconfirm --onefile --noconsole --icon "C:/Users/pwjdg/PycharmProjects/pythonProject2/gdsc-logo.ico" --name "GDSC DAU 멤버 포인트 관리자"  "C:/Users/pwjdg/PycharmProjects/pythonProject2/PointManager.py"
-
-'''
