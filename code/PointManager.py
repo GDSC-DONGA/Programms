@@ -1,6 +1,8 @@
+import json
 import sys
 import time
 import traceback
+import datetime
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QFileDialog, QTableWidget, QTableWidgetItem, \
     QMessageBox, QInputDialog
@@ -46,13 +48,11 @@ class SaveFileThread(QThread):
                     self.parent.data.append(row_data)
                     ws.append(row_data)
 
-            # 파일 저장
-            wb.save(f"{self.parent.filename}.xlsx")
             self.parent.first_ref = db.reference()
             # 파이어베이스에 결과물 저장
             for row in range(0, self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
-                print(student_number, end=' ')
+                # print(student_number, end=' ')
                 name = self.parent.table_widget.item(row, 1).text()
                 total = self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 2).text()
                 average = self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 1).text()
@@ -61,25 +61,24 @@ class SaveFileThread(QThread):
                     "합계": total,
                     "평균": average
                 })
-                print(name)
+                # print(name)
 
             self.parent.second_ref = db.reference("/admin")
             # 파이어베이스에 결과물 저장
             second_param = {}
             for row in range(self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
-                print(student_number, end=' ')
+                # print(student_number, end=' ')
 
                 for col in range(1, self.parent.table_widget.columnCount()):
                     column_name = self.parent.table_widget.horizontalHeaderItem(col).text()
                     cell_value = self.parent.table_widget.item(row, col).text()
                     second_param[column_name] = cell_value
-                    print(column_name)
                 self.parent.second_ref.child(student_number).set(second_param)
-                print(second_param)
+                # print(second_param)
 
         except Exception as e:
-            print(e)
+            # print(e)
             self.finished_signal.emit(False)
             exc_type, exc_value, exc_traceback = sys.exc_info()
             tb_list = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -88,6 +87,11 @@ class SaveFileThread(QThread):
                 f.write(tb_str)
         else:
             self.finished_signal.emit(True)
+
+            # 저장 후 백업
+            backup = self.parent.first_ref.get()
+            with open(f"saved_{self.parent.backup_filename}", 'w') as f:
+                json.dump(backup, f)
 
 
 class MainWindow(QMainWindow):
@@ -123,11 +127,16 @@ class MainWindow(QMainWindow):
         first_path = {json file path}
         first_cred = credentials.Certificate(first_path)
         self.first_firebase_app = firebase_admin.initialize_app(first_cred, {
-            'databaseURL': 'https://<firebase RDB url>.firebaseio.com/'
+            'databaseURL': 'https://<RDB url>.firebaseio.com/'
         })
 
         self.table_widget.itemChanged.connect(self.update_total_and_average)  # itemChanged 시그널 연결
         self.show()
+
+        # 백업 날짜 지정
+        self.now = datetime.datetime.now()
+        self.date_str = self.now.strftime("%Y-%m-%d")
+        self.backup_filename = f"{self.date_str}_backup.json"
 
     def update_total_and_average(self, item):
         if item is not None and 2 <= item.column() < self.table_widget.columnCount() - 2:
@@ -160,7 +169,7 @@ class MainWindow(QMainWindow):
             index = current_column_count - 2
             self.table_widget.insertColumn(index)
             self.table_widget.setHorizontalHeaderItem(index, header_item)
-            print(self.column_names)
+            # print(self.column_names)
 
             # add empty cells to the new column for each row
             for row in range(self.table_widget.rowCount()):  # 0으로 초기화
@@ -169,10 +178,20 @@ class MainWindow(QMainWindow):
 
     def open_file_dialog(self):
         self.table_widget.clear()
+
+        # 백업용
+        dump = db.reference('')
+        dump_data = dump.get()
+
+
+        # 파일 백업
+        with open(self.backup_filename, 'w') as f:
+            json.dump(dump_data, f)
+
         ref = db.reference('/admin')
         students = ref.order_by_child('이름').get()
         students_number = list(students.keys())
-        print(students_number[0])
+        # print(students_number[0])
         left_header = ['학번', '이름']
         right_header = ['합계', '평균']
         student_feature = None
@@ -190,11 +209,11 @@ class MainWindow(QMainWindow):
 
         # sum
         headers = left_header + headers + right_header
-        print(headers)
+        # print(headers)
 
         # key value 확인
-        for key, value in students.items():
-            print(key, value)
+        # for key, value in students.items():
+        #     print(key, value)
 
         if students is not None:
 
@@ -236,13 +255,12 @@ class MainWindow(QMainWindow):
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        self.filename, _ = QFileDialog.getSaveFileName(self, "파일 저장", "",
-                                                       "Excel Files (*.xlsx);;CSV Files (*.csv)", options=options)
-        if self.filename:
-            QMessageBox.information(self, "파일 저장", "작업이 끝내면 안내하겠습니다.")
-            self.save_thread = SaveFileThread(parent=self)
-            self.save_thread.finished_signal.connect(self.show_save_file_dialog)
-            self.save_thread.start()
+
+        QMessageBox.information(self, "파일 저장", "작업이 끝내면 안내하겠습니다.")
+        self.save_thread = SaveFileThread(parent=self)
+        self.save_thread.finished_signal.connect(self.show_save_file_dialog)
+        self.save_thread.start()
+
         # time.sleep(10)
         # del self.save_thread
 
