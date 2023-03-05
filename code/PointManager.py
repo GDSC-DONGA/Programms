@@ -1,5 +1,7 @@
 import sys
 import time
+import traceback
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QFileDialog, QTableWidget, QTableWidgetItem, \
     QMessageBox, QInputDialog
 from PyQt5.QtCore import QThread, pyqtSignal, QMutexLocker, QReadWriteLock, QReadLocker, QMutex
@@ -28,6 +30,7 @@ class SaveFileThread(QThread):
             ws.append(headers.split("\t"))
 
             # row 데이터 추가
+
             self.parent.data = []
             total_count = self.parent.table_widget.rowCount() - 1
             for row in range(self.parent.table_widget.rowCount()):
@@ -66,20 +69,23 @@ class SaveFileThread(QThread):
             for row in range(self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
                 print(student_number, end=' ')
-                for idx, column_name in enumerate(self.parent.column_names[2:-2], 2): # 새로 추가된 열까지 적용 받음
-                    second_param[column_name] = self.parent.table_widget.item(row, idx).text()
 
-                second_param.update({
-                    "이름": self.parent.table_widget.item(row, 1).text(),
-                    "합계": self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 2).text(),
-                    "평균": self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 1).text(),
-                })
+                for col in range(1, self.parent.table_widget.columnCount()):
+                    column_name = self.parent.table_widget.horizontalHeaderItem(col).text()
+                    cell_value = self.parent.table_widget.item(row, col).text()
+                    second_param[column_name] = cell_value
+                    print(column_name)
                 self.parent.second_ref.child(student_number).set(second_param)
-                print(second_param["이름"])
+                print(second_param)
 
         except Exception as e:
             print(e)
             self.finished_signal.emit(False)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            tb_list = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            tb_str = ''.join(tb_list)
+            with open("error_log.txt", "a") as f:
+                f.write(tb_str)
         else:
             self.finished_signal.emit(True)
 
@@ -114,10 +120,10 @@ class MainWindow(QMainWindow):
         self.data = []
         self.column_names = []  # 기본 열 이름 설정
         # Firebase 프로젝트에 액세스하는 코드
-        first_path = <your key.json path>
+        first_path = {json file path}
         first_cred = credentials.Certificate(first_path)
         self.first_firebase_app = firebase_admin.initialize_app(first_cred, {
-            'databaseURL': 'https://<your db name>.firebaseio.com/'
+            'databaseURL': 'https://<firebase RDB url>.firebaseio.com/'
         })
 
         self.table_widget.itemChanged.connect(self.update_total_and_average)  # itemChanged 시그널 연결
@@ -157,7 +163,7 @@ class MainWindow(QMainWindow):
             print(self.column_names)
 
             # add empty cells to the new column for each row
-            for row in range(self.table_widget.rowCount()): # 0으로 초기화
+            for row in range(self.table_widget.rowCount()):  # 0으로 초기화
                 item = QTableWidgetItem("0")
                 self.table_widget.setItem(row, index, item)
 
@@ -169,11 +175,12 @@ class MainWindow(QMainWindow):
         print(students_number[0])
         left_header = ['학번', '이름']
         right_header = ['합계', '평균']
-        headers = []
-        for student_number in students_number:
-            student = students[student_number]
+        student_feature = None
 
-        headers = list(student.keys())
+        for student_number in students_number:
+            student_feature = students[student_number]
+
+        headers = list(student_feature.keys())
 
         to_remove = ["합계", "평균", "이름"]
 
@@ -250,4 +257,3 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_window = MainWindow()
     app.exec_()
-
