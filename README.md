@@ -2,9 +2,9 @@
 - **code/Lookup.py : 멤버 포인트 조회 시스템**
   - 학번 입력 후 해당하는 학번의 합계, 평균을 출력, 현재 분포를 차트로 시각화
 - **PointManager.py : 포인트 setting 시스템**  
-  - FireBase RealTime DataBase의 /admin 데이터를 Tabular 형태로 데이터 Read 
+  - FireBase RealTime DataBase의 /admin 데이터를 Tabular 형태로 데이터 Read / 백업 데이터 생성됨
   - 해당하는 학생의 포인트 항목 수정 후 자동으로 갱신되는 합계, 평균 확인
-  - save시 자동으로 DB에 Write
+  - save시 자동으로 DB에 Write / 백업 데이터 생성됨
 
 
 관련 패키지는 `env` 폴더 참고바람.
