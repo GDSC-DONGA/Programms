@@ -52,7 +52,6 @@ class SaveFileThread(QThread):
             # 파이어베이스에 결과물 저장
             for row in range(0, self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
-                # print(student_number, end=' ')
                 name = self.parent.table_widget.item(row, 1).text()
                 total = self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 2).text()
                 average = self.parent.table_widget.item(row, self.parent.table_widget.columnCount() - 1).text()
@@ -61,24 +60,20 @@ class SaveFileThread(QThread):
                     "합계": total,
                     "평균": average
                 })
-                # print(name)
 
             self.parent.second_ref = db.reference("/admin")
             # 파이어베이스에 결과물 저장
             second_param = {}
             for row in range(self.parent.table_widget.rowCount()):
                 student_number = self.parent.table_widget.item(row, 0).text()
-                # print(student_number, end=' ')
 
                 for col in range(1, self.parent.table_widget.columnCount()):
                     column_name = self.parent.table_widget.horizontalHeaderItem(col).text()
                     cell_value = self.parent.table_widget.item(row, col).text()
                     second_param[column_name] = cell_value
                 self.parent.second_ref.child(student_number).set(second_param)
-                # print(second_param)
 
         except Exception as e:
-            # print(e)
             self.finished_signal.emit(False)
             exc_type, exc_value, exc_traceback = sys.exc_info()
             tb_list = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -138,16 +133,15 @@ class MainWindow(QMainWindow):
         self.date_str = self.now.strftime("%Y-%m-%d")
         self.backup_filename = f"{self.date_str}_backup.json"
 
-    def update_total_and_average(self, item):
+       def update_total_and_average(self, item):
+        # 2번째 열 이후로 처리
+        total = 0.0
         if item is not None and 2 <= item.column() < self.table_widget.columnCount() - 2:
-            # 2번째 열 이후로 처리
-            total = 0
             count = self.table_widget.columnCount() - 4  # 합계를 계산할 열의 개수 (8개)
             for col in range(2, self.table_widget.columnCount() - 2):  # 2번째 열부터 총합 계산
                 cell_value = self.table_widget.item(item.row(), col)
-                if cell_value is not None and cell_value.text().isnumeric():
-                    total += int(cell_value.text())
-
+                if cell_value is not None and isinstance(float(cell_value.text()), float):
+                    total += float(cell_value.text())
             # 합계 열 갱신
             total_item = QTableWidgetItem(str(total))
             self.table_widget.setItem(item.row(), self.table_widget.columnCount() - 2, total_item)
@@ -169,14 +163,13 @@ class MainWindow(QMainWindow):
             index = current_column_count - 2
             self.table_widget.insertColumn(index)
             self.table_widget.setHorizontalHeaderItem(index, header_item)
-            # print(self.column_names)
 
             # add empty cells to the new column for each row
             for row in range(self.table_widget.rowCount()):  # 0으로 초기화
                 item = QTableWidgetItem("0")
                 self.table_widget.setItem(row, index, item)
 
-    def open_file_dialog(self):
+        def open_file_dialog(self):
         self.table_widget.clear()
 
         # 백업용
@@ -191,7 +184,7 @@ class MainWindow(QMainWindow):
         ref = db.reference('/admin')
         students = ref.order_by_child('이름').get()
         students_number = list(students.keys())
-        # print(students_number[0])
+
         left_header = ['학번', '이름']
         right_header = ['합계', '평균']
         student_feature = None
@@ -207,13 +200,8 @@ class MainWindow(QMainWindow):
         for col_name in to_remove:
             headers.remove(col_name)
 
-        # sum
+        # headers sum
         headers = left_header + headers + right_header
-        # print(headers)
-
-        # key value 확인
-        # for key, value in students.items():
-        #     print(key, value)
 
         if students is not None:
 
@@ -227,13 +215,17 @@ class MainWindow(QMainWindow):
                 for col, header in enumerate(headers):
                     if header == '학번':
                         cell_value = list(students.keys())[row]
+                    elif header == '이름':
+                        cell_value = student.get(header)
                     else:
                         cell_value = student.get(header)
-                        if cell_value is None:
-                            cell_value = 0
+                        if cell_value is None or cell_value == '':
+                            cell_value = 0.0
+                        else:
+                            cell_value = float(cell_value)
                     item = QTableWidgetItem(str(cell_value))
                     self.table_widget.setItem(row, col, item)
-                    data_row.append(cell_value)
+                    data_row.append(cell_value)  # 그대로 처리
                 self.data.append(data_row)
 
         # 합계와 평균을 업데이트
