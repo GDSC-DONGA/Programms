@@ -25,14 +25,13 @@ firebase_admin.initialize_app(cred, {
 
 rc('font', family="Malgun Gothic")
 
-
 def get_student_info(student_id):
     ref = db.reference(student_id)
     student = ref.get()
     if student:
         name = student.get("이름")
-        scores = student.get("합계")
-        avg = student.get("평균")
+        scores = float(student.get("합계"))
+        avg = float(student.get("평균"))
         return name, scores, avg
     else:
         return None, None, None
@@ -42,10 +41,10 @@ def get_students_info(student_id):
     ref = db.reference("students")
     students = ref.get()
     name = 0
-    scores = 0
+    scores = 0.0
     if students:
-        total = 0
-        count = 0
+        total = 0.0
+        count = 0.0
         for student_key, student in students.items():
             if student_key == student_id:
                 name = student.get("이름")
@@ -67,7 +66,7 @@ def show_student_info(event=None):
         if name:
             name_label.config(text=f"이름: {name}")
             scores_label.config(text=f"합계: {scores}")
-            avg_label.config(text=f"평균: {avg}")
+            avg_label.config(text=f"평균: {round(avg, 3)}")
             draw_chart(name, scores, avg)
         else:
             name_label.config(text="")
@@ -99,19 +98,19 @@ def draw_chart(name, scores, avg):
         all_avgs = []
         for student_key, student in students.items():
             if student_key != 'admin':
-                all_scores.append(int(student.get("합계")))
+                all_scores.append(float(student.get("합계")))
                 all_avgs.append(float(student.get("평균")))
         all_total = sum(all_scores) / len(all_scores)  # 합계 평균
         all_avg = sum(all_avgs) / len(all_scores)  # 전체 평균
 
         fig, ax = plt.subplots()
         bars = ax.bar(["Your Scores", "Your Average", "All Scores avg", "All Average"],
-                      [int(scores), float(avg), all_total, all_avg],
+                      [float(scores), float(avg), all_total, all_avg],
                       color=["red", "red", "blue", "blue"])
 
         ax.set_title(f"{name}'s Scores")
         ax.set_ylabel('Scores')
-        ax.set_ylim([0, max(all_total, max(int(scores), float(avg))) + 10])
+        ax.set_ylim([0, max(all_total, max(float(scores), float(avg))) + 10])
 
         # 막대 위에 값 추가
         for i, bar in enumerate(bars):
